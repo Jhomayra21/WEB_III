@@ -1,0 +1,96 @@
+﻿@page
+@model Practica1.Pages.PendienteModel
+@{
+    ViewData["Title"] = "Tareas Pendientes";
+}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+
+<div class="fila-entre" style="margin-top:20px;">
+    <form method="get" style="margin-bottom:15px;">
+        <label>
+            Mostrar:
+            <select name="tamanio" onchange="this.form.submit()" style="margin:0 5px; padding:5px; border-radius:4px; border:1px solid #ccc;">
+                @foreach (var size in new int[] { 5, 10, 15, 25, 50 })
+                {
+                    if (Model.TamanoPagina == size)
+                    {
+                        <option value="@size" selected="selected">@size</option>
+                    }
+                    else
+                    {
+                        <option value="@size">@size</option>
+                    }
+                }
+            </select>
+            tareas por página
+        </label>
+    </form>
+</div>
+
+<div style="color:#444; margin-bottom:15px;">
+    Mostrando @(Model.TotalTareas == 0 ? 0 : ((Model.PaginaActual - 1) * Model.TamanoPagina) + 1)
+    -
+    @(Math.Min(Model.PaginaActual * Model.TamanoPagina, Model.TotalTareas))
+    de @Model.TotalTareas tareas
+</div>
+
+<div class="tabla-responsive">
+    <table class="tabla-tareas">
+        <thead>
+            <tr>
+                <th>Nombre Tarea</th>
+                <th>Fecha Vencimiento</th>
+                <th>Estado Tarea</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Tareas.Count == 0)
+            {
+                <tr>
+                    <td colspan="4">No hay tareas pendientes para mostrar</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var tarea in Model.Tareas)
+                {
+                    <tr>
+                        <td>@tarea.nombreTarea</td>
+                        <td>@tarea.fechaVencimiento</td>
+                        <td>
+                            <span style="background-color: #ffc107; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 0.85em;">
+                                @tarea.estado
+                            </span>
+                        </td>
+                        <td>
+                            <a href="#" class="btn-editar" title="Editar">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </a>
+                            <a href="#" class="btn-eliminar" title="Eliminar">
+                                <i class="fa-solid fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<div style="text-align: center; margin-top: 20px;">
+    <ul style="display: flex; list-style-type: none; padding: 0; justify-content: center;">
+        @for (int i = 1; i <= Model.TotalPaginas; i++)
+        {
+            <li style="margin: 0 5px;">
+                <a href="?pagina=@i&tamanio=@Model.TamanoPagina"
+                   style="padding: 8px 12px; text-decoration: none; border-radius: 4px;
+                             @(i == Model.PaginaActual ?
+                                               "background-color: #FF914D; color: white;" :
+                                               "background-color: #FFF3E0; color: #333;")">
+                @i
+            </a>
+        </li>
+                }
+    </ul>
+</div>
