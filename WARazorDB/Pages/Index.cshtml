@@ -1,0 +1,38 @@
+﻿@page
+@model WARazorDB.Pages.IndexModel
+
+@{
+    ViewData["Title"] = "Lista de Tareas";
+}
+
+<h1>Lista de Tareas</h1>
+
+<p>
+    <a asp-page="Create" class="btn-navy">Crear Nueva Tarea</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.Tarea[0].nombreTarea)</th>
+            <th>@Html.DisplayNameFor(model => model.Tarea[0].fechaVencimiento)</th>
+            <th>@Html.DisplayNameFor(model => model.Tarea[0].estado)</th>
+            <th>@Html.DisplayNameFor(model => model.Tarea[0].idUsuario)</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Tarea) {
+        <tr>
+            <td>@Html.DisplayFor(modelItem => item.nombreTarea)</td>
+            <td>@Html.DisplayFor(modelItem => item.fechaVencimiento)</td>
+            <td>@Html.DisplayFor(modelItem => item.estado)</td>
+            <td>@Html.DisplayFor(modelItem => item.idUsuario)</td>
+            <td class="action-buttons">
+                <a asp-page="./Edit" asp-route-id="@item.Id">Edit</a>
+                <a asp-page="./Details" asp-route-id="@item.Id">Details</a>
+                <a asp-page="./Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
