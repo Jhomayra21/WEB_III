@@ -1,7 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -10,22 +6,23 @@ using WAMVC.Models;
 
 namespace WAMVC.Controllers
 {
-    public class ProductoController : Controller
+    public class PedidoController : Controller
     {
         private readonly ArtesaniasDBContext _context;
 
-        public ProductoController(ArtesaniasDBContext context)
+        public PedidoController(ArtesaniasDBContext context)
         {
             _context = context;
         }
 
-        // GET: Producto
+        // GET: Pedido
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Productos.ToListAsync());
+            var pedidos = _context.Pedidos.Include(p => p.Cliente);
+            return View(await pedidos.ToListAsync());
         }
 
-        // GET: Producto/Details/5
+        // GET: Pedido/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -33,46 +30,50 @@ namespace WAMVC.Controllers
                 return NotFound();
             }
 
-            var productoModel = await _context.Productos
+            var pedido = await _context.Pedidos
+                .Include(p => p.Cliente)
+                .Include(p => p.DetallePedidos)
+                    .ThenInclude(d => d.Producto)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (productoModel == null)
+            if (pedido == null)
             {
                 return NotFound();
             }
 
-            return View(productoModel);
+            return View(pedido);
         }
 
-        // GET: Producto/Create
+        // GET: Pedido/Create
         public IActionResult Create()
         {
+            ViewData["IdCliente"] = new SelectList(_context.Clientes, "Id", "Nombre");
             return View();
         }
 
-        // POST: Producto/Create
+        // POST: Pedido/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Nombre,Descripcion,Precio,Stock")] ProductoModel productoModel)
+        public async Task<IActionResult> Create([Bind("Id,FechaPedido,IdCliente,Direccion,MontoTotal")] PedidoModel pedido)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
-                    _context.Add(productoModel);
+                    _context.Add(pedido);
                     await _context.SaveChangesAsync();
-                    TempData["Success"] = "Producto creado exitosamente.";
+                    TempData["Success"] = "Pedido creado exitosamente.";
                     return RedirectToAction(nameof(Index));
                 }
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError("", "Error al guardar el producto: " + ex.Message);
+                ModelState.AddModelError("", "Error al guardar el pedido: " + ex.Message);
             }
-            
-            return View(productoModel);
+            ViewData["IdCliente"] = new SelectList(_context.Clientes, "Id", "Nombre", pedido.IdCliente);
+            return View(pedido);
         }
 
-        // GET: Producto/Edit/5
+        // GET: Pedido/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -80,20 +81,21 @@ namespace WAMVC.Controllers
                 return NotFound();
             }
 
-            var productoModel = await _context.Productos.FindAsync(id);
-            if (productoModel == null)
+            var pedido = await _context.Pedidos.FindAsync(id);
+            if (pedido == null)
             {
                 return NotFound();
             }
-            return View(productoModel);
+            ViewData["IdCliente"] = new SelectList(_context.Clientes, "Id", "Nombre", pedido.IdCliente);
+            return View(pedido);
         }
 
-        // POST: Producto/Edit/5
+        // POST: Pedido/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Nombre,Descripcion,Precio,Stock")] ProductoModel productoModel)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,FechaPedido,IdCliente,Direccion,MontoTotal")] PedidoModel pedido)
         {
-            if (id != productoModel.Id)
+            if (id != pedido.Id)
             {
                 return NotFound();
             }
@@ -102,13 +104,13 @@ namespace WAMVC.Controllers
             {
                 try
                 {
-                    _context.Update(productoModel);
+                    _context.Update(pedido);
                     await _context.SaveChangesAsync();
-                    TempData["Success"] = "Producto actualizado exitosamente.";
+                    TempData["Success"] = "Pedido actualizado exitosamente.";
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ProductoModelExists(productoModel.Id))
+                    if (!PedidoExists(pedido.Id))
                     {
                         return NotFound();
                     }
@@ -119,10 +121,11 @@ namespace WAMVC.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(productoModel);
+            ViewData["IdCliente"] = new SelectList(_context.Clientes, "Id", "Nombre", pedido.IdCliente);
+            return View(pedido);
         }
 
-        // GET: Producto/Delete/5
+        // GET: Pedido/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -130,35 +133,36 @@ namespace WAMVC.Controllers
                 return NotFound();
             }
 
-            var productoModel = await _context.Productos
+            var pedido = await _context.Pedidos
+                .Include(p => p.Cliente)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (productoModel == null)
+            if (pedido == null)
             {
                 return NotFound();
             }
 
-            return View(productoModel);
+            return View(pedido);
         }
 
-        // POST: Producto/Delete/5
+        // POST: Pedido/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var productoModel = await _context.Productos.FindAsync(id);
-            if (productoModel != null)
+            var pedido = await _context.Pedidos.FindAsync(id);
+            if (pedido != null)
             {
-                _context.Productos.Remove(productoModel);
+                _context.Pedidos.Remove(pedido);
             }
 
             await _context.SaveChangesAsync();
-            TempData["Success"] = "Producto eliminado exitosamente.";
+            TempData["Success"] = "Pedido eliminado exitosamente.";
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ProductoModelExists(int id)
+        private bool PedidoExists(int id)
         {
-            return _context.Productos.Any(e => e.Id == id);
+            return _context.Pedidos.Any(e => e.Id == id);
         }
     }
 }

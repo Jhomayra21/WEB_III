@@ -1,14 +1,14 @@
-﻿@model IEnumerable<WAMVC.Models.ProductoModel>
+@model IEnumerable<WAMVC.Models.DetallePedidoModel>
 
 @{
-    ViewData["Title"] = "Lista de Productos";
+    ViewData["Title"] = "Lista de Detalles de Pedidos";
 }
 
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h2>Lista de Productos</h2>
+        <h2>Lista de Detalles de Pedidos</h2>
         <a asp-action="Create" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Nuevo Producto
+            <i class="fas fa-plus"></i> Nuevo Detalle
         </a>
     </div>
     <div class="card-body">
@@ -24,10 +24,13 @@
             <table class="table table-striped table-hover">
                 <thead>
                     <tr>
-                        <th>@Html.DisplayNameFor(model => model.Nombre)</th>
-                        <th>@Html.DisplayNameFor(model => model.Descripcion)</th>
-                        <th>@Html.DisplayNameFor(model => model.Precio)</th>
-                        <th>@Html.DisplayNameFor(model => model.Stock)</th>
+                        <th>ID</th>
+                        <th>Pedido</th>
+                        <th>Cliente</th>
+                        <th>Producto</th>
+                        <th>@Html.DisplayNameFor(model => model.Cantidad)</th>
+                        <th>@Html.DisplayNameFor(model => model.PrecioUnitario)</th>
+                        <th>@Html.DisplayNameFor(model => model.Subtotal)</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -35,14 +38,13 @@
                     @foreach (var item in Model)
                     {
                         <tr>
-                            <td>@Html.DisplayFor(modelItem => item.Nombre)</td>
-                            <td>@Html.DisplayFor(modelItem => item.Descripcion)</td>
-                            <td>@Html.DisplayFor(modelItem => item.Precio)</td>
-                            <td>
-                                <span class="badge @(item.Stock > 10 ? "bg-success" : item.Stock > 0 ? "bg-warning" : "bg-danger")">
-                                    @Html.DisplayFor(modelItem => item.Stock) unidades
-                                </span>
-                            </td>
+                            <td>@Html.DisplayFor(modelItem => item.Id)</td>
+                            <td>Pedido #@Html.DisplayFor(modelItem => item.IdPedido)</td>
+                            <td>@Html.DisplayFor(modelItem => item.Pedido.Cliente.Nombre)</td>
+                            <td>@Html.DisplayFor(modelItem => item.Producto.Nombre)</td>
+                            <td>@Html.DisplayFor(modelItem => item.Cantidad)</td>
+                            <td>@Html.DisplayFor(modelItem => item.PrecioUnitario)</td>
+                            <td>@Html.DisplayFor(modelItem => item.Subtotal)</td>
                             <td>
                                 <div class="btn-group" role="group">
                                     <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">

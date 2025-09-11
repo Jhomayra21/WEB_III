@@ -1,31 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WAMVC.Data;
 using WAMVC.Models;
 
 namespace WAMVC.Controllers
 {
-    public class ProductoController : Controller
+    public class ClienteController : Controller
     {
         private readonly ArtesaniasDBContext _context;
 
-        public ProductoController(ArtesaniasDBContext context)
+        public ClienteController(ArtesaniasDBContext context)
         {
             _context = context;
         }
 
-        // GET: Producto
+        // GET: Cliente
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Productos.ToListAsync());
+            return View(await _context.Clientes.ToListAsync());
         }
 
-        // GET: Producto/Details/5
+        // GET: Cliente/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -33,46 +28,46 @@ namespace WAMVC.Controllers
                 return NotFound();
             }
 
-            var productoModel = await _context.Productos
+            var cliente = await _context.Clientes
+                .Include(c => c.Pedidos)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (productoModel == null)
+            if (cliente == null)
             {
                 return NotFound();
             }
 
-            return View(productoModel);
+            return View(cliente);
         }
 
-        // GET: Producto/Create
+        // GET: Cliente/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Producto/Create
+        // POST: Cliente/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Nombre,Descripcion,Precio,Stock")] ProductoModel productoModel)
+        public async Task<IActionResult> Create([Bind("Id,Nombre,Email,Direccion")] ClienteModel cliente)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
-                    _context.Add(productoModel);
+                    _context.Add(cliente);
                     await _context.SaveChangesAsync();
-                    TempData["Success"] = "Producto creado exitosamente.";
+                    TempData["Success"] = "Cliente creado exitosamente.";
                     return RedirectToAction(nameof(Index));
                 }
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError("", "Error al guardar el producto: " + ex.Message);
+                ModelState.AddModelError("", "Error al guardar el cliente: " + ex.Message);
             }
-            
-            return View(productoModel);
+            return View(cliente);
         }
 
-        // GET: Producto/Edit/5
+        // GET: Cliente/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -80,20 +75,20 @@ namespace WAMVC.Controllers
                 return NotFound();
             }
 
-            var productoModel = await _context.Productos.FindAsync(id);
-            if (productoModel == null)
+            var cliente = await _context.Clientes.FindAsync(id);
+            if (cliente == null)
             {
                 return NotFound();
             }
-            return View(productoModel);
+            return View(cliente);
         }
 
-        // POST: Producto/Edit/5
+        // POST: Cliente/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Nombre,Descripcion,Precio,Stock")] ProductoModel productoModel)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Nombre,Email,Direccion")] ClienteModel cliente)
         {
-            if (id != productoModel.Id)
+            if (id != cliente.Id)
             {
                 return NotFound();
             }
@@ -102,13 +97,13 @@ namespace WAMVC.Controllers
             {
                 try
                 {
-                    _context.Update(productoModel);
+                    _context.Update(cliente);
                     await _context.SaveChangesAsync();
-                    TempData["Success"] = "Producto actualizado exitosamente.";
+                    TempData["Success"] = "Cliente actualizado exitosamente.";
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ProductoModelExists(productoModel.Id))
+                    if (!ClienteExists(cliente.Id))
                     {
                         return NotFound();
                     }
@@ -119,10 +114,10 @@ namespace WAMVC.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(productoModel);
+            return View(cliente);
         }
 
-        // GET: Producto/Delete/5
+        // GET: Cliente/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -130,35 +125,35 @@ namespace WAMVC.Controllers
                 return NotFound();
             }
 
-            var productoModel = await _context.Productos
+            var cliente = await _context.Clientes
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (productoModel == null)
+            if (cliente == null)
             {
                 return NotFound();
             }
 
-            return View(productoModel);
+            return View(cliente);
         }
 
-        // POST: Producto/Delete/5
+        // POST: Cliente/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var productoModel = await _context.Productos.FindAsync(id);
-            if (productoModel != null)
+            var cliente = await _context.Clientes.FindAsync(id);
+            if (cliente != null)
             {
-                _context.Productos.Remove(productoModel);
+                _context.Clientes.Remove(cliente);
             }
 
             await _context.SaveChangesAsync();
-            TempData["Success"] = "Producto eliminado exitosamente.";
+            TempData["Success"] = "Cliente eliminado exitosamente.";
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ProductoModelExists(int id)
+        private bool ClienteExists(int id)
         {
-            return _context.Productos.Any(e => e.Id == id);
+            return _context.Clientes.Any(e => e.Id == id);
         }
     }
 }

@@ -1,0 +1,65 @@
+@model WAMVC.Models.ClienteModel
+
+@{
+    ViewData["Title"] = "Detalles del Cliente";
+}
+
+<div class="card">
+    <div class="card-header">
+        <h2>Detalles del Cliente</h2>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <dl class="row">
+                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Nombre)</dt>
+                    <dd class="col-sm-8">@Html.DisplayFor(model => model.Nombre)</dd>
+                    
+                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Email)</dt>
+                    <dd class="col-sm-8">@Html.DisplayFor(model => model.Email)</dd>
+                    
+                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Direccion)</dt>
+                    <dd class="col-sm-8">@Html.DisplayFor(model => model.Direccion)</dd>
+                </dl>
+            </div>
+        </div>
+        
+        @if (Model.Pedidos != null && Model.Pedidos.Any())
+        {
+            <hr />
+            <h4>Pedidos del Cliente</h4>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>ID Pedido</th>
+                            <th>Fecha</th>
+                            <th>Total</th>
+                            <th>Dirección de Entrega</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var pedido in Model.Pedidos)
+                        {
+                            <tr>
+                                <td>@pedido.Id</td>
+                                <td>@pedido.FechaPedido.ToString("dd/MM/yyyy")</td>
+                                <td>@pedido.MontoTotal.ToString("C")</td>
+                                <td>@pedido.Direccion</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        
+        <div class="mt-3">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver a la Lista
+            </a>
+        </div>
+    </div>
+</div>

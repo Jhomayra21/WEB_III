@@ -1,0 +1,41 @@
+@model WAMVC.Models.ClienteModel
+
+@{
+    ViewData["Title"] = "Eliminar Cliente";
+}
+
+<div class="card">
+    <div class="card-header">
+        <h2>Eliminar Cliente</h2>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-warning">
+            <h4>¿Está seguro que desea eliminar este cliente?</h4>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <dl class="row">
+                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Nombre)</dt>
+                    <dd class="col-sm-8">@Html.DisplayFor(model => model.Nombre)</dd>
+                    
+                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Email)</dt>
+                    <dd class="col-sm-8">@Html.DisplayFor(model => model.Email)</dd>
+                    
+                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Direccion)</dt>
+                    <dd class="col-sm-8">@Html.DisplayFor(model => model.Direccion)</dd>
+                </dl>
+            </div>
+        </div>
+        
+        <form asp-action="Delete" method="post">
+            <input type="hidden" asp-for="Id" />
+            <button type="submit" class="btn btn-danger me-2">
+                <i class="fas fa-trash"></i> Confirmar Eliminación
+            </button>
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Cancelar
+            </a>
+        </form>
+    </div>
+</div>
