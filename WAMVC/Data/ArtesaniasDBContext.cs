@@ -11,6 +11,7 @@ namespace WAMVC.Data
         public DbSet<ClienteModel> Clientes { get; set; }
         public DbSet<PedidoModel> Pedidos { get; set; }
         public DbSet<DetallePedidoModel> DetallePedidos { get; set; }
+        public DbSet<Usuario> Usuarios { get; set; }
     
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

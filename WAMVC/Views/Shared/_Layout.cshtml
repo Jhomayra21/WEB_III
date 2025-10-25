@@ -50,6 +50,28 @@
                             </a>
                         </li>
                     </ul>
+
+                    <ul class="navbar-nav">
+                        @if (User?.Identity?.IsAuthenticated ?? false)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark">Hola, @User.Identity.Name</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Cuentas" asp-action="Logout">Cerrar sesión</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Cuentas" asp-action="Login">Iniciar sesión</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Cuentas" asp-action="Register">Registrar</a>
+                            </li>
+                        }
+                    </ul>
+
                 </div>
             </div>
         </nav>
