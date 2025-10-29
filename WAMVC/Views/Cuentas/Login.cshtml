@@ -1,25 +1,47 @@
 @{
- ViewData["Title"] = "Login";
+    ViewData["Title"] = "Iniciar Sesión";
 }
 
-<h2>Login</h2>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="text-center mb-0">Iniciar Sesión</h3>
+                </div>
+                <div class="card-body p-4">
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div asp-validation-summary="All" class="alert alert-danger"></div>
+                    }
 
-<form asp-action="Login" method="post">
- @Html.AntiForgeryToken()
- <div asp-validation-summary="All" class="text-danger"></div>
- <div class="mb-3">
- <label class="form-label">Email</label>
- <input name="email" class="form-control" />
- </div>
- <div class="mb-3">
- <label class="form-label">Contraseña</label>
- <input name="password" type="password" class="form-control" />
- </div>
- <div>
- <button type="submit" class="btn btn-primary">Iniciar sesión</button>
- </div>
-</form>
+                    <form asp-action="Login" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input name="email" type="email" class="form-control" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Contraseña</label>
+                            <input name="password" type="password" class="form-control" required />
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+                        </div>
+
+                        <div class="text-center mt-3">
+                            <p>¿No tienes cuenta? <a asp-action="Register">Regístrate aquí</a></p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
- <partial name="_ValidationScriptsPartial" />
+    <partial name="_ValidationScriptsPartial" />
 }

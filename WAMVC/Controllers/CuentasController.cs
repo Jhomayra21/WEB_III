@@ -1,175 +1,218 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using WAMVC.Data;
 using WAMVC.Models;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
 using System.Security.Cryptography;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Hosting;
 
 namespace WAMVC.Controllers
 {
- public class CuentasController : Controller
- {
- private readonly ArtesaniasDBContext _context;
- private readonly ILogger<CuentasController> _logger;
- private readonly IWebHostEnvironment _env;
+    public class CuentasController : Controller
+    {
+        private readonly ArtesaniasDBContext _context;
+        private readonly ILogger<CuentasController> _logger;
 
- public CuentasController(ArtesaniasDBContext context, ILogger<CuentasController> logger, IWebHostEnvironment env)
- {
- _context = context;
- _logger = logger;
- _env = env;
- }
+        public CuentasController(ArtesaniasDBContext context, ILogger<CuentasController> logger)
+        {
+            _context = context;
+            _logger = logger;
+        }
 
- // GET: /Cuentas/Register
- [HttpGet]
- public IActionResult Register()
- {
- return View();
- }
+        // GET: /Cuentas/Register
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult Register()
+        {
+            return View();
+        }
 
- // POST: /Cuentas/Register
- [HttpPost]
- [ValidateAntiForgeryToken]
- public async Task<IActionResult> Register(Usuario model, string password)
- {
- _logger.LogInformation("Register POST called for Email={Email}", model?.Email);
+        // POST: /Cuentas/Register
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Register(string nombre, string email, string password, string confirmPassword)
+        {
+            try
+            {
+                _logger.LogInformation("Iniciando registro para: {Email}", email);
 
- // validar contraseña enviada
- if (string.IsNullOrEmpty(password))
- {
- ModelState.AddModelError("", "La contraseña es requerida.");
- }
+                // Validar que las contraseñas coincidan
+                if (password != confirmPassword)
+                {
+                    ModelState.AddModelError("", "Las contraseñas no coinciden");
+                    return View();
+                }
 
- if (ModelState.IsValid)
- {
- try
- {
- var exists = await _context.Usuarios.AnyAsync(u => u.Email == model.Email);
- if (exists)
- {
- ModelState.AddModelError("Email", "El email ya está registrado.");
- return View(model);
- }
+                // Validar que no exista el email
+                var userExists = await _context.Usuarios
+                    .AnyAsync(u => u.Email.ToLower() == email.ToLower());
 
- model.PasswordHash = HashPassword(password);
- model.Role = string.IsNullOrEmpty(model.Role) ? "User" : model.Role;
- _context.Usuarios.Add(model);
- await _context.SaveChangesAsync();
+                if (userExists)
+                {
+                    ModelState.AddModelError("Email", "Este email ya está registrado");
+                    return View();
+                }
 
- _logger.LogInformation("Usuario creado Id={Id} Email={Email}", model.Id, model.Email);
+                // Crear nuevo usuario
+                var usuario = new Usuario
+                {
+                    Nombre = nombre,
+                    Email = email,
+                    PasswordHash = HashPassword(password),
+                    Role = "User"
+                };
 
- await SignInUser(model);
- return RedirectToAction("Index", "Home");
- }
- catch (DbUpdateException dbEx)
- {
- _logger.LogError(dbEx, "Error al guardar en la base de datos para Email={Email}", model?.Email);
- ModelState.AddModelError("", "Error al guardar en la base de datos: " + dbEx.GetBaseException().Message);
- return View(model);
- }
- catch (System.Exception ex)
- {
- _logger.LogError(ex, "Error inesperado en Register para Email={Email}", model?.Email);
- ModelState.AddModelError("", "Error inesperado: " + ex.GetBaseException().Message);
- return View(model);
- }
- }
- return View(model);
- }
+                _context.Usuarios.Add(usuario);
+                await _context.SaveChangesAsync();
 
- // GET: /Cuentas/Login
- [HttpGet]
- public IActionResult Login()
- {
- return View();
- }
+                _logger.LogInformation("Usuario registrado exitosamente: {Email}", email);
 
- // POST: /Cuentas/Login
- [HttpPost]
- [ValidateAntiForgeryToken]
- public async Task<IActionResult> Login(string email, string password)
- {
- _logger.LogInformation("Login POST called for Email={Email}", email);
+                // Iniciar sesión automáticamente después del registro
+                await SignInUser(usuario);
 
- if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
- {
- ModelState.AddModelError(string.Empty, "Email y contraseña son requeridos.");
- return View();
- }
+                return RedirectToAction("Index", "Home");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al registrar usuario: {Email}", email);
+                ModelState.AddModelError("", "Ocurrió un error al registrar el usuario: " + ex.Message);
+                return View();
+            }
+        }
 
- var user = await _context.Usuarios.SingleOrDefaultAsync(u => u.Email == email);
- if (user == null || !VerifyPassword(password, user.PasswordHash))
- {
- ModelState.AddModelError(string.Empty, "Credenciales inválidas.");
- return View();
- }
+        // GET: /Cuentas/Login
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult Login()
+        {
+            return View();
+        }
 
- await SignInUser(user);
- return RedirectToAction("Index", "Home");
- }
+        // POST: /Cuentas/Login
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(string email, string password)
+        {
+            try
+            {
+                _logger.LogInformation("Intento de login para: {Email}", email);
 
- [Authorize]
- public async Task<IActionResult> Logout()
- {
- await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
- return RedirectToAction("Login", "Cuentas");
- }
+                if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+                {
+                    ModelState.AddModelError("", "Email y contraseña son requeridos");
+                    return View();
+                }
 
- // Acción de depuración para verificar conexión y conteo de usuarios (solo en Development)
- [HttpGet]
- public async Task<IActionResult> Debug()
- {
- if (!_env.IsDevelopment())
- {
- return NotFound();
- }
- try
- {
- var canConnect = await _context.Database.CanConnectAsync();
- var count = await _context.Usuarios.CountAsync();
- return Content($"CanConnect={canConnect}; Usuarios={count}");
- }
- catch (System.Exception ex)
- {
- _logger.LogError(ex, "Error en Debug");
- return Content("Error: " + ex.GetBaseException().Message);
- }
- }
+                var usuario = await _context.Usuarios
+                    .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
 
- private async Task SignInUser(Usuario user)
- {
- var claims = new List<Claim>
- {
- new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
- new Claim(ClaimTypes.Name, user.Nombre ?? user.Email),
- new Claim(ClaimTypes.Email, user.Email),
- new Claim(ClaimTypes.Role, user.Role ?? "User")
- };
+                if (usuario == null)
+                {
+                    ModelState.AddModelError("", "Email o contraseña incorrectos");
+                    return View();
+                }
 
- var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
- var principal = new ClaimsPrincipal(identity);
- await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
- }
+                // Verificar contraseña
+                if (!VerifyPassword(password, usuario.PasswordHash))
+                {
+                    ModelState.AddModelError("", "Email o contraseña incorrectos");
+                    return View();
+                }
 
- // Simple password hashing using SHA256 (for demo only). For production, use ASP.NET Core Identity or a stronger KDF (e.g., PBKDF2/BCrypt/Argon2)
- private string HashPassword(string password)
- {
- using var sha = SHA256.Create();
- var bytes = System.Text.Encoding.UTF8.GetBytes(password);
- var hash = sha.ComputeHash(bytes);
- return Convert.ToBase64String(hash);
- }
+                // Iniciar sesión
+                await SignInUser(usuario);
 
- private bool VerifyPassword(string password, string storedHash)
- {
- var hash = HashPassword(password);
- return hash == storedHash;
- }
- }
+                _logger.LogInformation("Login exitoso para: {Email}", email);
+
+                return RedirectToAction("Index", "Home");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en login");
+                ModelState.AddModelError("", "Ocurrió un error al iniciar sesión: " + ex.Message);
+                return View();
+            }
+        }
+
+        // POST: /Cuentas/Logout
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Index", "Home");
+        }
+
+        // GET: /Cuentas/AccessDenied
+        [AllowAnonymous]
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
+
+        private async Task SignInUser(Usuario usuario)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
+                new Claim(ClaimTypes.Name, usuario.Nombre),
+                new Claim(ClaimTypes.Email, usuario.Email),
+                new Claim(ClaimTypes.Role, usuario.Role)
+            };
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal,
+                new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTime.UtcNow.AddDays(7)
+                });
+        }
+
+        private string HashPassword(string password)
+        {
+            using var sha256 = SHA256.Create();
+            var bytes = System.Text.Encoding.UTF8.GetBytes(password);
+            var hash = sha256.ComputeHash(bytes);
+            return Convert.ToBase64String(hash);
+        }
+
+        private bool VerifyPassword(string password, string hash)
+        {
+            var computedHash = HashPassword(password);
+            return computedHash == hash;
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> TestConnection()
+        {
+            try
+            {
+                var canConnect = await _context.Database.CanConnectAsync();
+                var userCount = await _context.Usuarios.CountAsync();
+                var users = await _context.Usuarios.ToListAsync();
+
+                return Json(new
+                {
+                    canConnect,
+                    userCount,
+                    users = users.Select(u => new { u.Id, u.Nombre, u.Email, u.Role })
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { error = ex.Message });
+            }
+        }
+    }
 }
