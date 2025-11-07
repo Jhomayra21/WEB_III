@@ -67,5 +67,19 @@ namespace WebAPI1.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
+        [HttpPatch("update-email")]
+        public async Task<IActionResult> UpdateEmail(int userId, string newEmail)
+        {
+            try
+            {
+                var user = await _userService.UpdateEmailAsync(userId, newEmail);
+                return Ok(new { message = "Correo electrónico actualizado", user.Id, user.Email });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
     }
 }

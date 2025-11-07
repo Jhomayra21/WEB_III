@@ -68,5 +68,20 @@ namespace WebAPI1.Services
             _appDbContext.Users.Remove(user);
             await _appDbContext.SaveChangesAsync();
         }
+
+        public async Task<User> UpdateEmailAsync(int userId, string newEmail)
+        {
+            var user = await _appDbContext.Users.FindAsync(userId);
+            if (user == null)
+                throw new Exception("Usuario no encontrado");
+
+            if (await _appDbContext.Users.AnyAsync(u => u.Email == newEmail))
+                throw new Exception("El nuevo correo electrónico ya está registrado");
+
+            user.Email = newEmail;
+            _appDbContext.Users.Update(user);
+            await _appDbContext.SaveChangesAsync();
+            return user;
+        }
     }
 }
